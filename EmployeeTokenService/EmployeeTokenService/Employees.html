@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body style="padding-top:20px;">
+    <div class="col-md-10 col-md-offset-1">
+        <div class="well">
+            <input type="button" id="btnLoadEmployees" class="btn btn-success" value="Load Employees" />
+        </div>
+        <div id="employeeContainer" class="well hidden">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Gender</th>
+                        <th>Salary</th>
+                    </tr>
+                </thead>
+                <tbody id="tblBody"></tbody>
+            </table>
+
+        </div>
+        <div id="sessionExpiredModal" class="modal fade" tabindex="-1" data-keyboard="false" data-backdrop="static">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Session Expired</h4>
+                    </div>
+                    <div class="modal-body">
+                        <h2>Please close this message to login again</h2>
+                    </div>
+                    <div class="modal-footer">
+                        <button data-dismiss="modal" class="btn btn-success">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="divError" class="alert alert-danger collapse">
+            <a id="errorClose" class="close" href="#">&times;</a>
+            <div id="divErrorText">
+
+            </div>
+        </div>
+    </div>
+    <script src="Scripts/jquery-1.10.2.min.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            if (sessionStorage.getItem('accessToken') == null) {
+                window.location.href = 'Login.html';
+            }
+            $('#sessionExpiredModal').on('hidden.bs.modal', function () {
+                window.location.href = 'Login.html';
+            });
+            $('#errorClose').click(function () {
+                $('#divError').hide('fade');
+            });
+            $('#btnLoadEmployees').click(function () {
+                $.ajax({
+                    url: '/api/employees',
+                    method: 'GET',
+                    headers: {
+                       'Authorization':'Bearer '+sessionStorage.getItem('accessToken')
+                    },
+                    success: function (data) {
+                        $('#employeeContainer').removeClass('hidden');
+                        var $tbody = $('#tblBody');
+                        $tbody.empty();
+                        $.each(data, function (index, item) {
+                            var $row = $('<tr>')
+                                        .append($('<td>').html(item.ID))
+                                        .append($('<td>').html(item.FirstName))
+                                        .append($('<td>').html(item.LastName))
+                                        .append($('<td>').html(item.Gender))
+                                        .append($('<td>').html(item.Salary));
+                            $tbody.append($row);
+                        });                        
+                    },
+                    error: function (jqXHR) {
+                        if (jqXHR.status == "401") {
+                            $('#sessionExpiredModal').modal('show');
+                        }
+                        else{
+                            $('#divErrorText').text(jqXHR.responseText);
+                            $('#divError').show('fade')
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
